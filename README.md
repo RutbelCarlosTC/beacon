@@ -15,4 +15,5 @@ Se transmiten datos ambientales modificando los campos **Major** (temperatura) y
 ---
 
 ##  Receptor BLE – Lectura de datos ambientales
+![Receptor BLE](https://github.com/user-attachments/assets/28f8d84a-436c-4751-9cce-420e2072b9f0)
 
