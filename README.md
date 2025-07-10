@@ -30,9 +30,9 @@ data.putShort(tempInt.toShort())     // Major
 data.putShort(humidityInt.toShort()) // Minor
 ```
 
-📷 **Vista del Emisor en ejecución:**
+**Vista del Emisor en ejecución:**
 
-![Emisor BLE](https://github.com/user-attachments/assets/91aff0a3-8edd-4e33-a5ed-f3b0dfcfafd6)
+![Emisor BLE](https://github.com/user-attachments/assets/850d5016-c8aa-4771-999c-091b9a7d8693)
 
 > Se transmiten datos ambientales modificando dinámicamente los campos **Major** (temperatura) y **Minor** (humedad).
 
