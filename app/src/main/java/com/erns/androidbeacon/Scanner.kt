@@ -19,6 +19,9 @@ class Scanner(private val context: Context) {
     private var bluetoothLeScanner: BluetoothLeScanner? = null
     private var isScanning = false
 
+    // UUID específico para sensores de temperatura y humedad (debe coincidir con el Transmitter)
+    private val SENSOR_UUID = "6ef0e30d-7308-4458-b62e-f706c692ca77"
+
     // Callback para manejar los resultados del escaneo
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -32,10 +35,10 @@ class Scanner(private val context: Context) {
 
             // Procesar los datos del beacon
             scanRecord?.let { record ->
-                // Buscar datos de fabricante con ID 76 (Apple)
+                // Buscar datos de fabricante con ID 76 (Apple - 0x004C)
                 val manufacturerData = record.getManufacturerSpecificData(76)
                 manufacturerData?.let { data ->
-                    parseBeaconData(data, rssi, device.address)
+                    parseSensorBeaconData(data, rssi, device.address)
                 }
             }
         }
@@ -103,6 +106,12 @@ class Scanner(private val context: Context) {
             .build()
         filters.add(filter)
 
+        // Filtro adicional para dispositivos con el nombre del sensor
+        val nameFilter = ScanFilter.Builder()
+            .setDeviceName("TempHumSensor")
+            .build()
+        filters.add(nameFilter)
+
         // Configurar ajustes de escaneo
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER) // Ahorra batería
@@ -115,7 +124,7 @@ class Scanner(private val context: Context) {
         // Iniciar escaneo
         bluetoothLeScanner?.startScan(filters, settings, scanCallback)
         isScanning = true
-        Log.d(TAG, "Escaneo iniciado")
+        Log.d(TAG, "Escaneo de sensores iniciado")
     }
 
     fun stopScanning() {
@@ -133,7 +142,7 @@ class Scanner(private val context: Context) {
         Log.d(TAG, "Escaneo detenido")
     }
 
-    private fun parseBeaconData(data: ByteArray, rssi: Int, deviceAddress: String) {
+    private fun parseSensorBeaconData(data: ByteArray, rssi: Int, deviceAddress: String) {
         if (data.size < 23) {
             Log.w(TAG, "Datos insuficientes para ser un iBeacon")
             return
@@ -149,12 +158,21 @@ class Scanner(private val context: Context) {
         val uuid = ByteArray(16)
         System.arraycopy(data, 2, uuid, 0, 16)
         val uuidString = BleTools.byteArrayToHexString(uuid)
+        val formattedUuid = formatUuid(uuidString)
 
-        // Extraer Major (bytes 18-19)
-        val major = ((data[18].toInt() and 0xFF) shl 8) or (data[19].toInt() and 0xFF)
+        // Verificar si es nuestro sensor UUID
+        if (!formattedUuid.equals(SENSOR_UUID, ignoreCase = true)) {
+            Log.d(TAG, "UUID no coincide con sensor esperado. Recibido: $formattedUuid, Esperado: $SENSOR_UUID")
+            return
+        }
 
-        // Extraer Minor (bytes 20-21)
-        val minor = ((data[20].toInt() and 0xFF) shl 8) or (data[21].toInt() and 0xFF)
+        // Extraer Major: Temperatura (bytes 18-19)
+        val tempRaw = ((data[18].toInt() and 0xFF) shl 8) or (data[19].toInt() and 0xFF)
+        val temperature = tempRaw / 10.0f  // Convertir de entero a decimal
+
+        // Extraer Minor: Humedad (bytes 20-21)
+        val humidityRaw = ((data[20].toInt() and 0xFF) shl 8) or (data[21].toInt() and 0xFF)
+        val humidity = humidityRaw / 10.0f  // Convertir de entero a decimal
 
         // Extraer TX Power (byte 22)
         val txPower = data[22].toInt()
@@ -162,18 +180,28 @@ class Scanner(private val context: Context) {
         // Calcular distancia aproximada
         val distance = calculateDistance(txPower, rssi)
 
-        Log.i(TAG, "=== BEACON DETECTADO ===")
+        Log.i(TAG, "=== SENSOR BEACON DETECTADO ===")
         Log.i(TAG, "Dirección MAC: $deviceAddress")
-        Log.i(TAG, "UUID: $uuidString")
-        Log.i(TAG, "Major: $major")
-        Log.i(TAG, "Minor: $minor")
-        Log.i(TAG, "TX Power: $txPower")
-        Log.i(TAG, "RSSI: $rssi")
+        Log.i(TAG, "UUID: $formattedUuid")
+        Log.i(TAG, "Temperatura: ${String.format("%.1f", temperature)}°C")
+        Log.i(TAG, "Humedad: ${String.format("%.1f", humidity)}%")
+        Log.i(TAG, "TX Power: $txPower dBm")
+        Log.i(TAG, "RSSI: $rssi dBm")
         Log.i(TAG, "Distancia aproximada: ${String.format("%.2f", distance)} metros")
-        Log.i(TAG, "=======================")
+        Log.i(TAG, "===============================")
 
-        // Aquí puedes agregar callback para notificar a la UI
-        onBeaconDetected(deviceAddress, uuidString, major, minor, rssi, distance)
+        // Callback para notificar los datos del sensor
+        onSensorDataReceived(deviceAddress, temperature, humidity, rssi, distance)
+    }
+
+    private fun formatUuid(hexString: String): String {
+        // Convertir el string hex a formato UUID estándar
+        val cleanHex = hexString.replace("-", "").lowercase()
+        if (cleanHex.length != 32) {
+            return hexString
+        }
+
+        return "${cleanHex.substring(0, 8)}-${cleanHex.substring(8, 12)}-${cleanHex.substring(12, 16)}-${cleanHex.substring(16, 20)}-${cleanHex.substring(20, 32)}"
     }
 
     private fun calculateDistance(txPower: Int, rssi: Int): Double {
@@ -183,21 +211,47 @@ class Scanner(private val context: Context) {
         return Math.pow(10.0, ratio)
     }
 
-    // Callback para notificar cuando se detecta un beacon
-    private fun onBeaconDetected(
+    // Callback para notificar cuando se reciben datos del sensor
+    private fun onSensorDataReceived(
         address: String,
-        uuid: String,
-        major: Int,
-        minor: Int,
+        temperature: Float,
+        humidity: Float,
         rssi: Int,
         distance: Double
     ) {
         // Aquí puedes implementar la lógica para actualizar la UI
         // Por ejemplo, enviar un broadcast o llamar a un callback
-        Log.d(TAG, "Beacon procesado: $address - UUID: $uuid - Major: $major - Minor: $minor")
+        Log.d(TAG, "Datos del sensor procesados: $address - Temp: ${String.format("%.1f", temperature)}°C - Hum: ${String.format("%.1f", humidity)}%")
+
+        // Ejemplo de cómo podrías notificar a la UI:
+        // sensorDataListener?.onSensorDataReceived(address, temperature, humidity, rssi, distance)
+    }
+
+    // Interfaz para callback de datos del sensor
+    interface SensorDataListener {
+        fun onSensorDataReceived(
+            address: String,
+            temperature: Float,
+            humidity: Float,
+            rssi: Int,
+            distance: Double
+        )
+    }
+
+    // Variable para listener
+    private var sensorDataListener: SensorDataListener? = null
+
+    // Método para establecer listener
+    fun setSensorDataListener(listener: SensorDataListener) {
+        this.sensorDataListener = listener
     }
 
     fun isScanning(): Boolean {
         return isScanning
+    }
+
+    // Método adicional para obtener información detallada del último sensor detectado
+    fun getLastSensorInfo(): String {
+        return "Escaneo activo: $isScanning"
     }
 }

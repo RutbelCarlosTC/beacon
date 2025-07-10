@@ -8,8 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kotlin.random.Random
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), Scanner.SensorDataListener {
     private val TAG = "MainActivity"
     private var scanner: Scanner? = null
     private var transmitter: Transmitter? = null
@@ -28,11 +29,18 @@ class MainActivity : AppCompatActivity() {
         scanner = Scanner(applicationContext)
         transmitter = Transmitter(applicationContext)
 
+        // Configurar listener para recibir datos del sensor
+        scanner?.setSensorDataListener(this)
+
         // Botón para iniciar transmisión
         val btnStartTransmitter: Button = findViewById(R.id.btnStartTransmitter)
         btnStartTransmitter.setOnClickListener {
-            transmitter?.startAdvertiser()
-            Log.d(TAG, "Transmisión iniciada")
+            // Simular datos de sensor para testing
+            val temperature = Random.nextFloat() * 15 + 20 // 20-35°C
+            val humidity = Random.nextFloat() * 40 + 40     // 40-80%
+
+            transmitter?.updateSensorData(temperature, humidity)
+            Log.d(TAG, "Transmisión iniciada con datos: Temp=${String.format("%.1f", temperature)}°C, Hum=${String.format("%.1f", humidity)}%")
         }
 
         // Botón para iniciar escaneo
@@ -66,6 +74,25 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         scanner?.stopScanning()
+        transmitter?.stopAdvertising()
+    }
+
+    // Implementación del callback para recibir datos del sensor
+    override fun onSensorDataReceived(
+        address: String,
+        temperature: Float,
+        humidity: Float,
+        rssi: Int,
+        distance: Double
+    ) {
+        // Solo log de los datos recibidos - sin cambios en UI
+        Log.i(TAG, "=== DATOS RECIBIDOS DEL SENSOR ===")
+        Log.i(TAG, "Dirección: $address")
+        Log.i(TAG, "Temperatura: ${String.format("%.1f", temperature)}°C")
+        Log.i(TAG, "Humedad: ${String.format("%.1f", humidity)}%")
+        Log.i(TAG, "RSSI: $rssi dBm")
+        Log.i(TAG, "Distancia: ${String.format("%.2f", distance)}m")
+        Log.i(TAG, "================================")
     }
 
     private val activityResultLauncher = registerForActivityResult(
