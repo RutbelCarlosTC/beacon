@@ -168,11 +168,11 @@ class Scanner(private val context: Context) {
 
         // Extraer Major: Temperatura (bytes 18-19)
         val tempRaw = ((data[18].toInt() and 0xFF) shl 8) or (data[19].toInt() and 0xFF)
-        val temperature = tempRaw / 10.0f  // Convertir de entero a decimal
+        val temperature = tempRaw / 100.0f  // Convertir de entero a decimal
 
-        // Extraer Minor: Humedad (bytes 20-21)
+        // Extraer Minor: Humedad (bytes 20-21) - Big Endian
         val humidityRaw = ((data[20].toInt() and 0xFF) shl 8) or (data[21].toInt() and 0xFF)
-        val humidity = humidityRaw / 10.0f  // Convertir de entero a decimal
+        val humidity = humidityRaw / 100.0f
 
         // Extraer TX Power (byte 22)
         val txPower = data[22].toInt()
