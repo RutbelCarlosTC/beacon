@@ -74,7 +74,7 @@ El sistema requiere los siguientes permisos (declarados y solicitados en tiempo 
 | `BLUETOOTH_CONNECT`            | Conexión e interacción con dispositivos     |  Sí             | 12 (API 31)     |
 | `BLUETOOTH_ADVERTISE`          | Publicidad de datos vía BLE (iBeacon)       |  Sí             | 12 (API 31)     |
 | `ACCESS_FINE_LOCATION`         | Localización precisa (necesaria para escaneo BLE en versiones anteriores) |  Sí (hasta Android 11) | 6 (API 23) |
-| `ACCESS_COARSE_LOCATION`       | Localización aproximada (alternativa menos precisa) | ⚠ A veces       | 6 (API 23)      |
+| `ACCESS_COARSE_LOCATION`       | Localización aproximada (alternativa menos precisa) | A veces       | 6 (API 23)      |
 | `BLUETOOTH`                    | Permiso base para Bluetooth (obsoleto desde Android 12) |  No             | 1               |
 | `BLUETOOTH_ADMIN`              | Cambios en configuración Bluetooth (obsoleto) |  No           | 1               |
 
