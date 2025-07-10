@@ -30,5 +30,23 @@ Se transmiten datos ambientales modificando los campos **Major** (temperatura) y
 ---
 
 ##  Receptor BLE – Lectura de datos ambientales
+El escáner BLE detecta dispositivos cercanos con manufacturer ID 0x004C, extrae el UUID, y decodifica los valores de temperatura y humedad desde los campos Major y Minor.
 ![Receptor BLE](https://github.com/user-attachments/assets/28f8d84a-436c-4751-9cce-420e2072b9f0)
 
+```kotlin
+val tempRaw = ((data[18].toInt() and 0xFF) shl 8) or (data[19].toInt() and 0xFF)
+val humidityRaw = ((data[20].toInt() and 0xFF) shl 8) or (data[21].toInt() and 0xFF)
+val temperature = tempRaw / 100.0f
+val humidity = humidityRaw / 100.0f
+```
+
+También estima la distancia aproximada basándose en el TX Power y el RSSI recibido:
+```kotlin
+val ratio = (txPower - rssi) / 20.0
+val distance = Math.pow(10.0, ratio)
+```
+
+Permisos vistos:
+BLUETOOTH_ADVERTISE
+BLUETOOTH_SCAN
+ACCESS_FINE_LOCATION
