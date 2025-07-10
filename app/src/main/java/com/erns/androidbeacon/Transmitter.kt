@@ -35,7 +35,7 @@ class Transmitter(private val context: Context) {
 
         Log.e(TAG, " adapter.leMaximumAdvertisingDataLength "+ adapter.leMaximumAdvertisingDataLength)
 
-        adapter.name="LE"
+        adapter.name="fr"
 
         val advertiser = adapter.bluetoothLeAdvertiser
 

@@ -4,8 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -13,6 +11,9 @@ import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
+    private var scanner: Scanner? = null
+    private var transmitter: Transmitter? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -23,15 +24,36 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        // Inicializar scanner y transmitter
+        scanner = Scanner(applicationContext)
+        transmitter = Transmitter(applicationContext)
+
+        // Botón para iniciar transmisión
         val btnStartTransmitter: Button = findViewById(R.id.btnStartTransmitter)
         btnStartTransmitter.setOnClickListener {
-            val transmitter = Transmitter(applicationContext)
-            transmitter.startAdvertiser()
+            transmitter?.startAdvertiser()
+            Log.d(TAG, "Transmisión iniciada")
         }
 
+        // Botón para iniciar escaneo
+        val btnStartScanner: Button = findViewById(R.id.btnStartScanner)
+        btnStartScanner.setOnClickListener {
+            scanner?.startScanning()
+            Log.d(TAG, "Escaneo iniciado")
+        }
+
+        // Botón para detener escaneo
+        val btnStopScanner: Button = findViewById(R.id.btnStopScanner)
+        btnStopScanner.setOnClickListener {
+            scanner?.stopScanning()
+            Log.d(TAG, "Escaneo detenido")
+        }
+
+        // Solicitar permisos
         val permissions = arrayOf(
             android.Manifest.permission.BLUETOOTH_ADVERTISE,
             android.Manifest.permission.BLUETOOTH_CONNECT,
+            android.Manifest.permission.BLUETOOTH_SCAN,
             android.Manifest.permission.BLUETOOTH,
             android.Manifest.permission.BLUETOOTH_ADMIN,
             android.Manifest.permission.ACCESS_FINE_LOCATION,
@@ -39,10 +61,14 @@ class MainActivity : AppCompatActivity() {
         )
 
         activityResultLauncher.launch(permissions)
-
     }
 
-    val activityResultLauncher = registerForActivityResult(
+    override fun onDestroy() {
+        super.onDestroy()
+        scanner?.stopScanning()
+    }
+
+    private val activityResultLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         permissions.entries.forEach {
@@ -54,7 +80,5 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "Permission $permissionName is denied")
             }
         }
-
     }
-
 }

@@ -24,6 +24,32 @@
             android:layout_height="52dp"
             android:layout_weight="1"
             android:text="Start" />
+
+        <Button
+            android:id="@+id/btnStartScanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Iniciar Escaneo"
+            android:layout_marginBottom="16dp"
+            android:padding="16dp"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btnStopScanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Detener Escaneo"
+            android:layout_marginBottom="16dp"
+            android:padding="16dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Revisa los logs para ver los beacons detectados"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            android:layout_marginTop="32dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
