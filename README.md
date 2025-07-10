@@ -66,7 +66,7 @@ val distance = Math.pow(10.0, ratio)
 
 El sistema requiere los siguientes permisos (declarados y solicitados en tiempo de ejecución):
 
-## 📱 Tabla de permisos BLE requeridos
+## Tabla de permisos BLE requeridos
 
 | Permiso                          | Descripción                                 | ¿Runtime request? | Desde Android |
 |----------------------------------|---------------------------------------------|-------------------|----------------|
